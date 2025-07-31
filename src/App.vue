@@ -1,6 +1,17 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import HelloWorld from './components/HelloWorld.vue'
 import TheWelcome from './components/TheWelcome.vue'
+import AssetCard from './components/AssetCard.vue'
+
+import type { Asset } from './components/AssetCard.vue';
+
+const assetList = ref<Asset[]>([]);
+
+onMounted(async () => {
+  const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1');
+  assetList.value = await response.json();
+});
 
 </script>
 
@@ -9,8 +20,13 @@ import TheWelcome from './components/TheWelcome.vue'
     <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
 
     <div class="wrapper">
+
       <HelloWorld msg="You did it!" message="Hello Derayah!" :assets="['BTC', 'ETH', 'SOL']" />
+
+      <AssetCard v-for="asset in assetList" :name="asset.name" :price="asset.price" />
+
     </div>
+
   </header>
 
   <main>
