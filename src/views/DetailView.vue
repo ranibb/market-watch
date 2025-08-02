@@ -1,53 +1,20 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-
-// Let's create a more detailed interface for our asset data
-interface MarketAssetDetail {
-  id: string
-  symbol: string
-  name: string
-  image: {
-    large: string
-  }
-  description: {
-    en: string
-  }
-  market_data: {
-    current_price: {
-      usd: number
-    }
-    market_cap: {
-      usd: number
-    }
-  }
-}
+import { useMarketStore } from '@/stores/market'
 
 // 1. Get access to the current route information
 const route = useRoute()
 
-// 2. Define our state variables using ref()
-const asset = ref<MarketAssetDetail | null>(null)
-const isLoading = ref(true)
-const error = ref<string | null>(null)
+// 2. Get an instance of the store. This is now our single source of truth.
+const marketStore = useMarketStore()
 
 // 3. Get the asset ID from the URL parameters (e.g., the 'bitcoin' in '/asset/bitcoin')
-const assetId = route.params.id
+const assetId = route.params.id as string
 
-// 4. Fetch the data for this specific asset when the component is mounted
+// 4. When the component mounts, call the store's action with the ID.
 onMounted(async () => {
-  try {
-    const response = await fetch(`https://api.coingecko.com/api/v3/coins/${assetId}`)
-    if (!response.ok) {
-      throw new Error(`Asset with ID "${assetId}" not found.`)
-    }
-    asset.value = await response.json()
-  } catch (e: any) {
-    error.value = e.message
-    console.error(e)
-  } finally {
-    isLoading.value = false
-  }
+  marketStore.fetchAssetById(assetId)
 })
 </script>
 
@@ -60,33 +27,30 @@ onMounted(async () => {
       >← Back to Dashboard</RouterLink
     >
 
-    <!-- 5. Conditionally render content based on the state -->
+    <!-- 4. Bind everything to the store's state -->
     <div
-      v-if="isLoading"
+      v-if="marketStore.isLoading"
       class="loading"
     >
       Loading asset details...
     </div>
 
-    <div
-      v-else-if="error"
-      class="error-message"
-    >
+    <div v-else-if="marketStore.error" class="error-message">
       <h2>Error</h2>
-      <p>{{ error }}</p>
+      <p>{{ marketStore.error }}</p>
     </div>
 
     <div
-      v-else-if="asset"
+      v-else-if="marketStore.currentAsset"
       class="asset-details"
     >
       <div class="asset-header">
         <img
-          :src="asset.image.large"
-          :alt="asset.name"
+          :src="marketStore.currentAsset.image.large"
+          :alt="marketStore.currentAsset.name"
           class="asset-image-large"
         />
-        <h1>{{ asset.name }} ({{ asset.symbol.toUpperCase() }})</h1>
+        <h1>{{ marketStore.currentAsset.name }} ({{ marketStore.currentAsset.symbol.toUpperCase() }})</h1>
       </div>
 
       <div class="asset-metrics">
@@ -94,7 +58,7 @@ onMounted(async () => {
           <span class="metric-label">Price</span>
           <span class="metric-value">{{
             new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-              asset.market_data.current_price.usd
+              marketStore.currentAsset.market_data.current_price.usd
             )
           }}</span>
         </div>
@@ -102,20 +66,20 @@ onMounted(async () => {
           <span class="metric-label">Market Cap</span>
           <span class="metric-value">{{
             new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-              asset.market_data.market_cap.usd
+              marketStore.currentAsset.market_data.market_cap.usd
             )
           }}</span>
         </div>
       </div>
 
       <div class="asset-description">
-        <h3>About {{ asset.name }}</h3>
+        <h3>About {{ marketStore.currentAsset.name }}</h3>
         <!-- 6. Use the v-html directive to render the description -->
         <!-- The API provides HTML content, so we use v-html. -->
         <!-- IMPORTANT: Only use v-html on content you trust. Using it on user-submitted -->
         <!-- content can expose you to security risks (XSS attacks). Since we trust -->
         <!-- the CoinGecko API, this is safe. -->
-        <div v-html="asset.description.en"></div>
+        <div v-html="marketStore.currentAsset.description.en"></div>
       </div>
     </div>
   </div>

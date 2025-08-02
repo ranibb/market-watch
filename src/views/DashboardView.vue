@@ -1,22 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import AssetCard from '../components/AssetCard.vue'
-import type { MarketAsset } from '../components/AssetCard.vue'
+import { useMarketStore } from '@/stores/market'
 
-const assetList = ref<MarketAsset[]>([])
-const isLoading = ref(true)
+// 2. Get an instance of the store. This is now our single source of truth.
+const marketStore = useMarketStore()
 
-onMounted(async () => {
-  try {
-    const response = await fetch(
-      'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1'
-    )
-    if (!response.ok) throw new Error('Failed to fetch assets')
-    assetList.value = await response.json()
-  } catch (error) {
-    console.error(error)
-  } finally {
-    isLoading.value = false
+// 3. When the component mounts, just call the store's action.
+onMounted(() => {
+  // Only fetch if the list is empty, to prevent re-fetching on navigation.
+  if (marketStore.assets.length === 0) {
+    marketStore.fetchAssets()
   }
 })
 </script>
@@ -24,11 +18,13 @@ onMounted(async () => {
 <template>
   <div>
     <h2>Market Dashboard</h2>
-    <div v-if="isLoading">Loading...</div>
+     <!-- 4. Bind directly to the store's state -->
+    <div v-if="marketStore.isLoading && marketStore.assets.length === 0">Loading...</div>
+    <div v-else-if="marketStore.error">{{ marketStore.error }}</div>
     <div v-else>
       <!-- Loop over the assetList and render an AssetCard for each one -->
       <AssetCard
-        v-for="asset in assetList"
+        v-for="asset in marketStore.assetList"
         :key="asset.id"
         :id="asset.id"
         :symbol="asset.symbol"
