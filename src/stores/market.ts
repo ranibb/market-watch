@@ -3,41 +3,41 @@ import { fetchMarketAssets, fetchAssetDetail } from '@/services/marketApi'
 
 // Define the TypeScript interfaces for our data structures
 export interface MarketAsset {
-  id: string;
-  symbol: string;
-  name: string;
-  current_price: number;
-  image: string;
-  
+  id: string
+  symbol: string
+  name: string
+  current_price: number
+  image: string
 }
 
 export interface MarketAssetDetail {
-  id: string;
-  symbol: string;
-  name: string;
-  current_price: number;
+  id: string
+  symbol: string
+  name: string
+  current_price: number
   description: {
-    en: string;
-  };
+    en: string
+  }
   image: {
-    large: string;
-  };
+    large: string
+  }
   market_data: {
     current_price: {
-      usd: number;
-    };
+      usd: number
+    }
     market_cap: {
-      usd: number;
-    };
-  };
+      usd: number
+    }
+  }
 }
 
 // Define the shape of our store's state
 interface MarketState {
-  assets: MarketAsset[];
-  currentAsset: MarketAssetDetail | null;
-  isLoading: boolean;
-  error: string | null;
+  assets: MarketAsset[]
+  currentAsset: MarketAssetDetail | null
+  isLoading: boolean
+  error: string | null
+  searchQuery: string
 }
 
 // Create the store
@@ -48,12 +48,26 @@ export const useMarketStore = defineStore('market', {
     currentAsset: null,
     isLoading: false,
     error: null,
+    searchQuery: '',
   }),
 
   // 2. GETTERS: Computed properties for the store. Like computed() in a component.
   getters: {
     // A simple getter to get the full list
-    assetList: (state) => state.assets,
+    // assetList: (state) => state.assets,
+
+    // The new, powerful getter!
+    filteredAssets: (state) => {
+      if (!state.searchQuery) {
+        return state.assets // If no search term, return the full list
+      }
+      const lowerCaseQuery = state.searchQuery.toLowerCase()
+      return state.assets.filter(
+        (asset) =>
+          asset.name.toLowerCase().includes(lowerCaseQuery) ||
+          asset.symbol.toLowerCase().includes(lowerCaseQuery)
+      )
+    },
   },
 
   // 3. ACTIONS: Methods that can change the state. Where we put our business logic.
@@ -81,6 +95,10 @@ export const useMarketStore = defineStore('market', {
       } finally {
         this.isLoading = false
       }
+    },
+
+    setSearchQuery(query: string) {
+      this.searchQuery = query
     },
   },
 })

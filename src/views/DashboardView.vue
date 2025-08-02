@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import AssetCard from '../components/AssetCard.vue'
 import { useMarketStore } from '@/stores/market'
 
 // 2. Get an instance of the store. This is now our single source of truth.
 const marketStore = useMarketStore()
+
+// This is the elegant way to create a two-way binding with a Pinia store state
+const searchQuery = computed({
+  get: () => marketStore.searchQuery,
+  set: (value) => marketStore.setSearchQuery(value),
+})
 
 // 3. When the component mounts, just call the store's action.
 onMounted(() => {
@@ -18,12 +24,21 @@ onMounted(() => {
 <template>
   <div>
     <h2>Market Dashboard</h2>
-     <!-- 4. Bind directly to the store's state -->
+
+    <!-- The new search input field -->
+    <input
+      type="text"
+      v-model="searchQuery"
+      placeholder="Search by name or symbol..."
+      class="search-input"
+    />
+
+    <!-- 4. Bind directly to the store's state -->
     <div v-if="marketStore.error">{{ marketStore.error }}</div>
-    <div v-else>
+    <div v-else-if="marketStore.filteredAssets.length > 0">
       <!-- Loop over the assetList and render an AssetCard for each one -->
       <AssetCard
-        v-for="asset in marketStore.assetList"
+        v-for="asset in marketStore.filteredAssets"
         :key="asset.id"
         :id="asset.id"
         :symbol="asset.symbol"
@@ -32,5 +47,28 @@ onMounted(() => {
         :image="asset.image"
       />
     </div>
+    <div
+      v-else
+      class="no-results"
+    >
+      <p>No assets found for "{{ searchQuery }}"</p>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.search-input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+</style>
