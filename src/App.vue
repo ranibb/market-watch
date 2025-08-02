@@ -1,16 +1,28 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import { useMarketStore } from '@/stores/market'
+import GlobalLoadingIndicator from '@/components/GlobalLoadingIndicator.vue'
 
+// Get access to the store
+const marketStore = useMarketStore()
 </script>
 
 <template>
+  <!-- This global component will now show/hide automatically based on the store's loading state -->
+  <GlobalLoadingIndicator v-if="marketStore.isLoading" />
+  
   <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+    <img
+      alt="Vue logo"
+      class="logo"
+      src="./assets/logo.svg"
+      width="125"
+      height="125"
+    />
 
     <div class="wrapper">
       <h1>Derayah Market Watch</h1>
     </div>
-
   </header>
 
   <main>

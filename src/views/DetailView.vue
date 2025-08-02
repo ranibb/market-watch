@@ -28,14 +28,7 @@ onMounted(async () => {
     >
 
     <!-- 4. Bind everything to the store's state -->
-    <div
-      v-if="marketStore.isLoading"
-      class="loading"
-    >
-      Loading asset details...
-    </div>
-
-    <div v-else-if="marketStore.error" class="error-message">
+    <div v-if="marketStore.error" class="error-message">
       <h2>Error</h2>
       <p>{{ marketStore.error }}</p>
     </div>

@@ -19,8 +19,7 @@ onMounted(() => {
   <div>
     <h2>Market Dashboard</h2>
      <!-- 4. Bind directly to the store's state -->
-    <div v-if="marketStore.isLoading && marketStore.assets.length === 0">Loading...</div>
-    <div v-else-if="marketStore.error">{{ marketStore.error }}</div>
+    <div v-if="marketStore.error">{{ marketStore.error }}</div>
     <div v-else>
       <!-- Loop over the assetList and render an AssetCard for each one -->
       <AssetCard

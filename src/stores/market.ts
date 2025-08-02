@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { fetchMarketAssets, fetchAssetDetail } from '@/services/marketApi'
 
 // Define the TypeScript interfaces for our data structures
 export interface MarketAsset {
@@ -61,10 +62,7 @@ export const useMarketStore = defineStore('market', {
       this.isLoading = true
       this.error = null
       try {
-        const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1')
-        if (!response.ok) throw new Error('Failed to fetch assets')
-        // We use 'this' to access state properties inside an action
-        this.assets = await response.json()
+        this.assets = await fetchMarketAssets()
       } catch (e: any) {
         this.error = e.message
       } finally {
@@ -77,9 +75,7 @@ export const useMarketStore = defineStore('market', {
       this.error = null
       this.currentAsset = null
       try {
-        const response = await fetch(`https://api.coingecko.com/api/v3/coins/${id}`)
-        if (!response.ok) throw new Error(`Asset with ID "${id}" not found.`)
-        this.currentAsset = await response.json()
+        this.currentAsset = await fetchAssetDetail(id)
       } catch (e: any) {
         this.error = e.message
       } finally {
