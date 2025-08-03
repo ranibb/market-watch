@@ -13,12 +13,6 @@ const marketStore = useMarketStore()
   <GlobalLoadingIndicator v-if="marketStore.isLoading" />
   <GlobalErrorDisplay v-if="marketStore.error" />
 
-  <header class="app-header">
-    <div class="wrapper">
-      <h1>Derayah Market Watch</h1>
-    </div>
-  </header>
-
   <main>
     <!-- Wrap the RouterView with the Transition component -->
     <RouterView v-slot="{ Component }">
@@ -32,7 +26,6 @@ const marketStore = useMarketStore()
 <style scoped>
 .app-header {
   padding-bottom: 2rem;
-  border-bottom: 1px solid #eee;
   margin-bottom: 2rem;
 }
 

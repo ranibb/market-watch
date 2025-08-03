@@ -1,6 +1,6 @@
 import { setActivePinia, createPinia } from 'pinia'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { useMarketStore } from './market'
+import { useMarketStore, type MarketAsset } from './market'
 import * as api from '@/services/marketApi' // Import our API service
 
 // Mock the entire marketApi service
@@ -24,7 +24,15 @@ describe('Market Store', () => {
 
   it('fetchAssets action should update state on success', async () => {
     const store = useMarketStore()
-    const mockAssets = [{ id: 'bitcoin', name: 'Bitcoin' }]
+    const mockAssets: MarketAsset[] = [
+      {
+        id: 'bitcoin',
+        name: 'Bitcoin',
+        symbol: 'btc',
+        current_price: 50000,
+        image: 'http://example.com/btc.png',
+      },
+    ]
 
     // Tell our mocked function what to return when called
     vi.mocked(api.fetchMarketAssets).mockResolvedValue(mockAssets)
