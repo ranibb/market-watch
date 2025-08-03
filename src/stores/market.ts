@@ -87,10 +87,11 @@ export const useMarketStore = defineStore('market', {
       try {
         this.assets = await fetchMarketAssets()
       } catch (e: unknown) {
-        this.error =
-          typeof e === 'object' && e !== null && 'message' in e
-            ? String((e as { message: unknown }).message)
-            : String(e)
+        if (e instanceof Error) {
+          this.error = e.message
+        } else {
+          this.error = 'An unexpected error occurred'
+        }
       } finally {
         this.isLoading = false
       }
@@ -111,10 +112,11 @@ export const useMarketStore = defineStore('market', {
         // 3. Add the fetched details to the cache, using the ID as the key.
         this.detailsCache.set(id, assetDetails)
       } catch (e: unknown) {
-        this.error =
-          typeof e === 'object' && e !== null && 'message' in e
-            ? String((e as { message: unknown }).message)
-            : String(e)
+        if (e instanceof Error) {
+          this.error = e.message
+        } else {
+          this.error = 'An unexpected error occurred'
+        }
       } finally {
         this.isLoading = false
       }
