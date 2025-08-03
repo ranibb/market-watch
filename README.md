@@ -2,7 +2,7 @@
 
 A single-page application built to explore and demonstrate a professional-grade front-end architecture using Vue 3, Pinia, and TypeScript. The application fetches real-time market data from the CoinGecko API and displays it in a clean, interactive, and performant user interface.
 
-**Live Demo:** [Link to your Netlify deployment]
+**Live Demo:** [[Market Watch](https://stunning-moonbeam-f11193.netlify.app/)]
 
 ---
 
