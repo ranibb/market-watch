@@ -10,16 +10,16 @@ export interface MarketAsset {
   image: string
 }
 
+// Let's bring back our detailed interface!
 export interface MarketAssetDetail {
   id: string
   symbol: string
   name: string
-  current_price: number
-  description: {
-    en: string
-  }
   image: {
     large: string
+  }
+  description: {
+    en: string
   }
   market_data: {
     current_price: {
@@ -34,7 +34,7 @@ export interface MarketAssetDetail {
 // Define the shape of our store's state
 interface MarketState {
   assets: MarketAsset[]
-  currentAsset: MarketAssetDetail | null
+  detailsCache: Map<string, MarketAssetDetail> // Implement a caching mechanism directly within our Pinia store. The Map data structure in JavaScript is perfect for this, as it allows us to store data using a unique key (the asset id)
   isLoading: boolean
   error: string | null
   searchQuery: string
@@ -45,7 +45,7 @@ export const useMarketStore = defineStore('market', {
   // 1. STATE: The core data of our store.
   state: (): MarketState => ({
     assets: [],
-    currentAsset: null,
+    detailsCache: new Map(), // <-- Initialize the cache as a new Map
     isLoading: false,
     error: null,
     searchQuery: '',
@@ -53,10 +53,6 @@ export const useMarketStore = defineStore('market', {
 
   // 2. GETTERS: Computed properties for the store. Like computed() in a component.
   getters: {
-    // A simple getter to get the full list
-    // assetList: (state) => state.assets,
-
-    // The new, powerful getter!
     filteredAssets: (state) => {
       if (!state.searchQuery) {
         return state.assets // If no search term, return the full list
@@ -68,11 +64,24 @@ export const useMarketStore = defineStore('market', {
           asset.symbol.toLowerCase().includes(lowerCaseQuery)
       )
     },
+
+    // // The new advanced getter!
+    // getAssetById: (state) => {
+    //   return (id: string) => state.assets.find((asset) => asset.id === id)
+    // },
+
+    // This getter will now check the CACHE for the detailed asset
+    getAssetDetailsById: (state) => {
+      return (id: string) => state.detailsCache.get(id)
+    },
   },
 
   // 3. ACTIONS: Methods that can change the state. Where we put our business logic.
   actions: {
     async fetchAssets() {
+      // We can add a check here to prevent re-fetching if assets already exist
+      if (this.assets.length > 0) return
+      
       this.isLoading = true
       this.error = null
       try {
@@ -84,12 +93,20 @@ export const useMarketStore = defineStore('market', {
       }
     },
 
-    async fetchAssetById(id: string) {
+        // This is the new, intelligent action!
+    async fetchAssetDetailsIfNeeded(id: string) {
+      // 1. Check if the details are already in the cache. If so, do nothing.
+      if (this.detailsCache.has(id)) {
+        return;
+      }
+
+      // 2. If not in the cache, fetch from the API.
       this.isLoading = true
       this.error = null
-      this.currentAsset = null
       try {
-        this.currentAsset = await fetchAssetDetail(id)
+        const assetDetails = await fetchAssetDetail(id)
+        // 3. Add the fetched details to the cache, using the ID as the key.
+        this.detailsCache.set(id, assetDetails)
       } catch (e: any) {
         this.error = e.message
       } finally {
@@ -99,6 +116,10 @@ export const useMarketStore = defineStore('market', {
 
     setSearchQuery(query: string) {
       this.searchQuery = query
+    },
+
+    clearError() {
+      this.error = null
     },
   },
 })

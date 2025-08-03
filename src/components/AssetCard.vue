@@ -1,20 +1,11 @@
 <script setup lang="ts">
-// 1. Define the props the component accepts.
-// This is how a parent component sends data down to this card.
-// We are using TypeScript to enforce the types for better code safety.
-export interface MarketAsset {
-  id: string
-  symbol: string
-  name: string
-  current_price: number
-  image: string
-}
-
+import { RouterLink } from 'vue-router'
+import type { MarketAsset } from '@/stores/market';
 const props = defineProps<MarketAsset>()
 </script>
 
 <template>
-  <RouterLink :to="'/asset/' + props.id">
+  <RouterLink :to="'/asset/' + props.id" class="asset-card">
     <div class="asset-info">
       <img
         :src="props.image"
@@ -71,6 +62,7 @@ const props = defineProps<MarketAsset>()
   margin: 0;
   font-size: 1.2rem;
   font-weight: 600;
+  color: #333;
 }
 
 .asset-price {

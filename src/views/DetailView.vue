@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { useMarketStore } from '@/stores/market'
 
@@ -12,9 +12,12 @@ const marketStore = useMarketStore()
 // 3. Get the asset ID from the URL parameters (e.g., the 'bitcoin' in '/asset/bitcoin')
 const assetId = route.params.id as string
 
-// 4. When the component mounts, call the store's action with the ID.
-onMounted(async () => {
-  marketStore.fetchAssetById(assetId)
+// This computed property now points to our new, cache-aware getter
+const assetDetails = computed(() => marketStore.getAssetDetailsById(assetId))
+
+// The lifecycle hook is now responsible for triggering the intelligent fetch action
+onMounted(() => {
+  marketStore.fetchAssetDetailsIfNeeded(assetId)
 })
 </script>
 
@@ -27,52 +30,44 @@ onMounted(async () => {
       >← Back to Dashboard</RouterLink
     >
 
-    <!-- 4. Bind everything to the store's state -->
-    <div v-if="marketStore.error" class="error-message">
-      <h2>Error</h2>
-      <p>{{ marketStore.error }}</p>
+    <div
+      v-if="marketStore.isLoading"
+      class="loading"
+    >
+      Loading details...
     </div>
 
+    <!-- If after loading, the asset is still not found -->
     <div
-      v-else-if="marketStore.currentAsset"
-      class="asset-details"
+      v-else-if="!assetDetails && !marketStore.isLoading"
+      class="error-message"
     >
+      <h2>Error</h2>
+      <p>Could not load details for asset with ID "{{ assetId }}".</p>
+    </div>
+
+    <!-- Render the asset details once found -->
+<div v-else-if="assetDetails" class="asset-details">
       <div class="asset-header">
-        <img
-          :src="marketStore.currentAsset.image.large"
-          :alt="marketStore.currentAsset.name"
-          class="asset-image-large"
-        />
-        <h1>{{ marketStore.currentAsset.name }} ({{ marketStore.currentAsset.symbol.toUpperCase() }})</h1>
+        <img :src="assetDetails.image.large" :alt="assetDetails.name" class="asset-image-large" />
+        <h1>{{ assetDetails.name }} ({{ assetDetails.symbol.toUpperCase() }})</h1>
       </div>
 
       <div class="asset-metrics">
         <div class="metric-item">
           <span class="metric-label">Price</span>
-          <span class="metric-value">{{
-            new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-              marketStore.currentAsset.market_data.current_price.usd
-            )
-          }}</span>
+          <span class="metric-value">{{ new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(assetDetails.market_data.current_price.usd) }}</span>
         </div>
         <div class="metric-item">
           <span class="metric-label">Market Cap</span>
-          <span class="metric-value">{{
-            new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-              marketStore.currentAsset.market_data.market_cap.usd
-            )
-          }}</span>
+          <span class="metric-value">{{ new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(assetDetails.market_data.market_cap.usd) }}</span>
         </div>
       </div>
-
+      
       <div class="asset-description">
-        <h3>About {{ marketStore.currentAsset.name }}</h3>
-        <!-- 6. Use the v-html directive to render the description -->
-        <!-- The API provides HTML content, so we use v-html. -->
-        <!-- IMPORTANT: Only use v-html on content you trust. Using it on user-submitted -->
-        <!-- content can expose you to security risks (XSS attacks). Since we trust -->
-        <!-- the CoinGecko API, this is safe. -->
-        <div v-html="marketStore.currentAsset.description.en"></div>
+        <h3>About {{ assetDetails.name }}</h3>
+        <!-- We can now use the rich description from the details API -->
+        <div v-html="assetDetails.description.en"></div>
       </div>
     </div>
   </div>

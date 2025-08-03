@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import AssetCard from '../components/AssetCard.vue'
+import AssetCardSkeleton from '../components/AssetCardSkeleton.vue'
 import { useMarketStore } from '@/stores/market'
 
 // 2. Get an instance of the store. This is now our single source of truth.
@@ -33,8 +34,15 @@ onMounted(() => {
       class="search-input"
     />
 
+    <!-- Show 10 skeletons while loading -->
+    <div v-if="marketStore.isLoading && marketStore.assets.length === 0">
+      <AssetCardSkeleton
+        v-for="n in 10"
+        :key="n"
+      />
+    </div>
+
     <!-- 4. Bind directly to the store's state -->
-    <div v-if="marketStore.error">{{ marketStore.error }}</div>
     <div v-else-if="marketStore.filteredAssets.length > 0">
       <!-- Loop over the assetList and render an AssetCard for each one -->
       <AssetCard

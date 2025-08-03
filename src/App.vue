@@ -2,59 +2,47 @@
 import { RouterView } from 'vue-router'
 import { useMarketStore } from '@/stores/market'
 import GlobalLoadingIndicator from '@/components/GlobalLoadingIndicator.vue'
+import GlobalErrorDisplay from '@/components/GlobalErrorDisplay.vue'
 
 // Get access to the store
 const marketStore = useMarketStore()
 </script>
 
 <template>
-  <!-- This global component will now show/hide automatically based on the store's loading state -->
+  <!-- These global components are now controlled by the store -->
   <GlobalLoadingIndicator v-if="marketStore.isLoading" />
-  
-  <header>
-    <img
-      alt="Vue logo"
-      class="logo"
-      src="./assets/logo.svg"
-      width="125"
-      height="125"
-    />
+  <GlobalErrorDisplay v-if="marketStore.error" />
 
+  <header class="app-header">
     <div class="wrapper">
       <h1>Derayah Market Watch</h1>
     </div>
   </header>
 
   <main>
-    <RouterView />
+    <!-- Wrap the RouterView with the Transition component -->
+    <RouterView v-slot="{ Component }">
+      <Transition
+        name="fade"
+        mode="out-in"
+      >
+        <component :is="Component" />
+      </Transition>
+    </RouterView>
   </main>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
+.app-header {
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 2rem;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+.app-header h1 {
+  text-align: center;
+  font-weight: 600;
+  color: #333;
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
 </style>
