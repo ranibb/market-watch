@@ -24,30 +24,18 @@ onMounted(() => {
 <template>
   <div class="detail-view">
     <!-- A link to go back to the main dashboard -->
-    <RouterLink
-      to="/"
-      class="back-link"
-      >← Back to Dashboard</RouterLink
-    >
+    <RouterLink to="/" class="back-link">← Back to Dashboard</RouterLink>
 
-    <div
-      v-if="marketStore.isLoading"
-      class="loading"
-    >
-      Loading details...
-    </div>
+    <div v-if="marketStore.isLoading" class="loading">Loading details...</div>
 
     <!-- If after loading, the asset is still not found -->
-    <div
-      v-else-if="!assetDetails && !marketStore.isLoading"
-      class="error-message"
-    >
+    <div v-else-if="!assetDetails && !marketStore.isLoading" class="error-message">
       <h2>Error</h2>
       <p>Could not load details for asset with ID "{{ assetId }}".</p>
     </div>
 
     <!-- Render the asset details once found -->
-<div v-else-if="assetDetails" class="asset-details">
+    <div v-else-if="assetDetails" class="asset-details">
       <div class="asset-header">
         <img :src="assetDetails.image.large" :alt="assetDetails.name" class="asset-image-large" />
         <h1>{{ assetDetails.name }} ({{ assetDetails.symbol.toUpperCase() }})</h1>
@@ -56,14 +44,22 @@ onMounted(() => {
       <div class="asset-metrics">
         <div class="metric-item">
           <span class="metric-label">Price</span>
-          <span class="metric-value">{{ new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(assetDetails.market_data.current_price.usd) }}</span>
+          <span class="metric-value">{{
+            new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+              assetDetails.market_data.current_price.usd,
+            )
+          }}</span>
         </div>
         <div class="metric-item">
           <span class="metric-label">Market Cap</span>
-          <span class="metric-value">{{ new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(assetDetails.market_data.market_cap.usd) }}</span>
+          <span class="metric-value">{{
+            new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+              assetDetails.market_data.market_cap.usd,
+            )
+          }}</span>
         </div>
       </div>
-      
+
       <div class="asset-description">
         <h3>About {{ assetDetails.name }}</h3>
         <!-- We can now use the rich description from the details API -->

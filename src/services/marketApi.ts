@@ -5,7 +5,9 @@ const API_BASE_URL = 'https://api.coingecko.com/api/v3'
 // It doesn't know anything about Pinia or the application's state.
 
 export const fetchMarketAssets = async () => {
-  const response = await fetch(`${API_BASE_URL}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1`)
+  const response = await fetch(
+    `${API_BASE_URL}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1`,
+  )
   if (!response.ok) {
     throw new Error('Failed to fetch assets from the API.')
   }

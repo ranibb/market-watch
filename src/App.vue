@@ -22,10 +22,7 @@ const marketStore = useMarketStore()
   <main>
     <!-- Wrap the RouterView with the Transition component -->
     <RouterView v-slot="{ Component }">
-      <Transition
-        name="fade"
-        mode="out-in"
-      >
+      <Transition name="fade" mode="out-in">
         <component :is="Component" />
       </Transition>
     </RouterView>
@@ -44,5 +41,4 @@ const marketStore = useMarketStore()
   font-weight: 600;
   color: #333;
 }
-
 </style>

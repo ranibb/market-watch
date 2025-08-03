@@ -36,10 +36,7 @@ onMounted(() => {
 
     <!-- Show 10 skeletons while loading -->
     <div v-if="marketStore.isLoading && marketStore.assets.length === 0">
-      <AssetCardSkeleton
-        v-for="n in 10"
-        :key="n"
-      />
+      <AssetCardSkeleton v-for="n in 10" :key="n" />
     </div>
 
     <!-- 4. Bind directly to the store's state -->
@@ -55,10 +52,7 @@ onMounted(() => {
         :image="asset.image"
       />
     </div>
-    <div
-      v-else
-      class="no-results"
-    >
+    <div v-else class="no-results">
       <p>No assets found for "{{ searchQuery }}"</p>
     </div>
   </div>

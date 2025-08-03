@@ -25,7 +25,7 @@ describe('Market Store', () => {
   it('fetchAssets action should update state on success', async () => {
     const store = useMarketStore()
     const mockAssets = [{ id: 'bitcoin', name: 'Bitcoin' }]
-    
+
     // Tell our mocked function what to return when called
     vi.mocked(api.fetchMarketAssets).mockResolvedValue(mockAssets)
 

@@ -1,17 +1,13 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import type { MarketAsset } from '@/stores/market';
+import type { MarketAsset } from '@/stores/market'
 const props = defineProps<MarketAsset>()
 </script>
 
 <template>
   <RouterLink :to="'/asset/' + props.id" class="asset-card">
     <div class="asset-info">
-      <img
-        :src="props.image"
-        alt="MarketAsset Logo"
-        class="asset-logo"
-      />
+      <img :src="props.image" alt="MarketAsset Logo" class="asset-logo" />
       <div>
         <h3 class="asset-name">{{ props.name }} ({{ props.symbol.toUpperCase() }})</h3>
         <p class="asset-price">
@@ -39,7 +35,9 @@ const props = defineProps<MarketAsset>()
   background-color: #f9f9f9;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  transition:
+    transform 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
 }
 
 .asset-card:hover {

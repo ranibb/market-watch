@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { useMarketStore } from '@/stores/market';
+import { useMarketStore } from '@/stores/market'
 
-const marketStore = useMarketStore();
+const marketStore = useMarketStore()
 
 // Create a new action in the store to clear the error
 const dismissError = () => {
   // We'll add this action to the store next
-  marketStore.clearError();
-};
+  marketStore.clearError()
+}
 </script>
 
 <template>
@@ -39,7 +39,7 @@ const dismissError = () => {
   padding: 2rem;
   border-radius: 8px;
   text-align: center;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   max-width: 400px;
 }
 

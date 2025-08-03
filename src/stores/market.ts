@@ -61,7 +61,7 @@ export const useMarketStore = defineStore('market', {
       return state.assets.filter(
         (asset) =>
           asset.name.toLowerCase().includes(lowerCaseQuery) ||
-          asset.symbol.toLowerCase().includes(lowerCaseQuery)
+          asset.symbol.toLowerCase().includes(lowerCaseQuery),
       )
     },
 
@@ -81,23 +81,26 @@ export const useMarketStore = defineStore('market', {
     async fetchAssets() {
       // We can add a check here to prevent re-fetching if assets already exist
       if (this.assets.length > 0) return
-      
+
       this.isLoading = true
       this.error = null
       try {
         this.assets = await fetchMarketAssets()
       } catch (e: unknown) {
-        this.error = typeof e === 'object' && e !== null && 'message' in e ? String((e as { message: unknown }).message) : String(e)
+        this.error =
+          typeof e === 'object' && e !== null && 'message' in e
+            ? String((e as { message: unknown }).message)
+            : String(e)
       } finally {
         this.isLoading = false
       }
     },
 
-        // This is the new, intelligent action!
+    // This is the new, intelligent action!
     async fetchAssetDetailsIfNeeded(id: string) {
       // 1. Check if the details are already in the cache. If so, do nothing.
       if (this.detailsCache.has(id)) {
-        return;
+        return
       }
 
       // 2. If not in the cache, fetch from the API.
@@ -108,7 +111,10 @@ export const useMarketStore = defineStore('market', {
         // 3. Add the fetched details to the cache, using the ID as the key.
         this.detailsCache.set(id, assetDetails)
       } catch (e: unknown) {
-        this.error = typeof e === 'object' && e !== null && 'message' in e ? String((e as { message: unknown }).message) : String(e)
+        this.error =
+          typeof e === 'object' && e !== null && 'message' in e
+            ? String((e as { message: unknown }).message)
+            : String(e)
       } finally {
         this.isLoading = false
       }
