@@ -1,21 +1,27 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import AssetCard from '../components/AssetCard.vue'
-import AssetCardSkeleton from '../components/AssetCardSkeleton.vue'
+import { onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useMarketStore } from '@/stores/market'
 
-// 2. Get an instance of the store. This is now our single source of truth.
-const marketStore = useMarketStore()
+// Import PrimeVue components
+import DataTable, { type DataTableRowSelectEvent } from 'primevue/datatable'
+import Column from 'primevue/column'
+import InputText from 'primevue/inputtext'
 
-// This is the elegant way to create a two-way binding with a Pinia store state
+const marketStore = useMarketStore()
+const router = useRouter()
+
 const searchQuery = computed({
   get: () => marketStore.searchQuery,
   set: (value) => marketStore.setSearchQuery(value),
 })
 
-// 3. When the component mounts, just call the store's action.
+const onRowSelect = (event: DataTableRowSelectEvent) => {
+  // Navigate to detail page when a row is clicked
+  router.push(`/asset/${event.data.id}`)
+}
+
 onMounted(() => {
-  // Only fetch if the list is empty, to prevent re-fetching on navigation.
   if (marketStore.assets.length === 0) {
     marketStore.fetchAssets()
   }
@@ -23,54 +29,116 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
-    <h2>Market Dashboard</h2>
+  <div class="dashboard-view">
+    <DataTable
+      :value="marketStore.filteredAssets"
+      :loading="marketStore.isLoading && marketStore.assets.length === 0"
+      paginator
+      :rows="5"
+      :rowsPerPageOptions="[5, 10, 20]"
+      sortMode="multiple"
+      selectionMode="single"
+      @rowSelect="onRowSelect"
+      dataKey="id"
+      paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+      currentPageReportTemplate="{first} to {last} of {totalRecords}"
+    >
+      <!-- The header template for the table -->
+      <template #header>
+        <div class="table-header">
+          <h2>Market Dashboard</h2>
+          <div class="search-bar-container">
+            <span class="p-input-icon-left">
+              <i class="pi pi-search" />
+              <InputText
+                v-model="searchQuery"
+                placeholder="Search assets..."
+                class="p-inputtext-sm"
+              />
+            </span>
+          </div>
+        </div>
+      </template>
 
-    <!-- The new search input field -->
-    <input
-      type="text"
-      v-model="searchQuery"
-      placeholder="Search by name or symbol..."
-      class="search-input"
-    />
+      <!-- The empty state template -->
+      <template #empty>
+        <div class="no-results">No assets found.</div>
+      </template>
 
-    <!-- Show 10 skeletons while loading -->
-    <div v-if="marketStore.isLoading && marketStore.assets.length === 0">
-      <AssetCardSkeleton v-for="n in 10" :key="n" />
-    </div>
+      <!-- Define the columns -->
+      <Column field="market_cap_rank" header="Rank" :sortable="true"></Column>
 
-    <!-- 4. Bind directly to the store's state -->
-    <div v-else-if="marketStore.filteredAssets.length > 0">
-      <!-- Loop over the assetList and render an AssetCard for each one -->
-      <AssetCard
-        v-for="asset in marketStore.filteredAssets"
-        :key="asset.id"
-        :id="asset.id"
-        :symbol="asset.symbol"
-        :name="asset.name"
-        :current_price="asset.current_price"
-        :image="asset.image"
-      />
-    </div>
-    <div v-else class="no-results">
-      <p>No assets found for "{{ searchQuery }}"</p>
-    </div>
+      <Column field="name" header="Name" :sortable="true">
+        <template #body="slotProps">
+          <div class="name-cell">
+            <img :src="slotProps.data.image" :alt="slotProps.data.name" class="asset-logo" />
+            <span>{{ slotProps.data.name }} ({{ slotProps.data.symbol.toUpperCase() }})</span>
+          </div>
+        </template>
+      </Column>
+
+      <Column field="current_price" header="Price" :sortable="true">
+        <template #body="slotProps">
+          {{
+            new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+              slotProps.data.current_price,
+            )
+          }}
+        </template>
+      </Column>
+    </DataTable>
   </div>
 </template>
 
 <style scoped>
-.search-input {
-  width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 1.5rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
+.table-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.search-bar-container .p-input-icon-left {
+  position: relative;
+  display: inline-block;
+}
+
+.search-bar-container .pi {
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  transform: translateY(-50%);
+  color: var(--p-text-color-secondary);
+}
+
+.search-bar-container .p-inputtext-sm {
+  width: 300px;
+  border-radius: 20px;
+  padding-left: 2.5rem;
+}
+
+.name-cell {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.asset-logo {
+  width: 24px;
+  height: 24px;
+}
 .no-results {
   text-align: center;
-  padding: 2rem;
-  color: #666;
+  padding: 3rem;
+}
+
+/* Make rows clickable */
+:deep(.p-datatable-tbody > tr) {
+  cursor: pointer;
 }
 </style>

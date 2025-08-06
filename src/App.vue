@@ -3,31 +3,66 @@ import { RouterView } from 'vue-router'
 import { useMarketStore } from '@/stores/market'
 import { useAuthStore } from '@/stores/auth'
 import GlobalLoadingIndicator from '@/components/GlobalLoadingIndicator.vue'
-import GlobalErrorDisplay from '@/components/GlobalErrorDisplay.vue'
+import { initializeToastService } from '@/services/toastService'
+import { initializeConfirmationService } from '@/services/confirmationService'
+import { confirmAction } from '@/services/confirmationService'
+import ThemeToggler from '@/components/ThemeToggler.vue'
 
-// Get access to the store
+// Import PrimeVue components
+import Toolbar from 'primevue/toolbar'
+import Button from 'primevue/button'
+import Avatar from 'primevue/avatar'
+import Toast from 'primevue/toast'
+import ConfirmDialog from 'primevue/confirmdialog'
+
+initializeToastService()
+initializeConfirmationService()
+
 const marketStore = useMarketStore()
 const authStore = useAuthStore()
+
+const handleLogout = async () => {
+  const confirmed = await confirmAction('Are you sure you want to log out?')
+  if (confirmed) {
+    authStore.logout()
+  }
+}
 </script>
 
 <template>
-  <!-- These global components are now controlled by the store -->
+  <Toast />
+  <ConfirmDialog />
   <GlobalLoadingIndicator v-if="marketStore.isLoading || authStore.isLoading" />
-  <GlobalErrorDisplay v-if="marketStore.error" />
 
-  <header class="app-header">
-    <div class="wrapper">
-      <h1>Market Watch</h1>
-      <!-- Add a navigation section -->
-      <nav v-if="authStore.currentUser">
-        <span>Welcome, {{ authStore.currentUser.email }}</span>
-        <button @click="authStore.logout" class="logout-button">Logout</button>
-      </nav>
-    </div>
-  </header>
+  <!-- The Toolbar provides a structured header -->
+  <Toolbar class="app-toolbar">
+    <template #start>
+      <div class="logo-area">
+        <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="40" height="40" />
+        <h1>Derayah Market Watch</h1>
+      </div>
+    </template>
 
-  <main>
-    <!-- Wrap the RouterView with the Transition component -->
+    <template #end>
+      <!-- Conditionally render user info and logout button -->
+      <div class="user-menu">
+        <ThemeToggler />
+        <div v-if="authStore.currentUser" class="user-info">
+          <Avatar icon="pi pi-user" shape="circle" />
+          <span class="username">{{ authStore.currentUser.email }}</span>
+          <Button
+            label="Logout"
+            icon="pi pi-sign-out"
+            @click="handleLogout"
+            severity="danger"
+            text
+          />
+        </div>
+      </div>
+    </template>
+  </Toolbar>
+
+  <main class="main-content">
     <RouterView v-slot="{ Component }">
       <Transition name="fade" mode="out-in">
         <component :is="Component" />
@@ -37,48 +72,44 @@ const authStore = useAuthStore()
 </template>
 
 <style scoped>
-.app-header {
-  padding-bottom: 2rem;
+.app-toolbar {
   margin-bottom: 2rem;
+  border-radius: 8px;
 }
 
-.app-header h1 {
-  text-align: center;
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-area h1 {
+  font-size: 1.5rem;
   font-weight: 600;
-  color: #333;
+  margin: 0;
 }
 
-.app-header .wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-nav {
+.user-menu {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem; /* Adjust gap */
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: 0.5rem; /* Add some space */
 }
 
-nav span {
+.username {
+  font-weight: 500;
   font-size: 0.9rem;
 }
 
-.logout-button {
-  padding: 0.4rem 0.8rem;
-  border: 1px solid #42b883;
-  background-color: transparent;
-  color: #42b883;
-  border-radius: 4px;
-  cursor: pointer;
-  transition:
-    background-color 0.2s,
-    color 0.2s;
+.main-content {
+  padding: 0 1rem;
 }
 
-.logout-button:hover {
-  background-color: #42b883;
-  color: white;
-}
+/* Global styles for transitions should be in main.css */
+/* Ensure these styles are in src/assets/main.css and NOT scoped */
 </style>

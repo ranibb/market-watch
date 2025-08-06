@@ -23,3 +23,11 @@ export const fetchAssetDetail = async (id: string): Promise<MarketAssetDetail> =
   }
   return response.json()
 }
+
+export const fetchAssetChartData = async (id: string) => {
+  const response = await fetch(`${API_BASE_URL}/coins/${id}/market_chart?vs_currency=usd&days=7`)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch chart data for asset "${id}".`)
+  }
+  return response.json()
+}

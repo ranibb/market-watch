@@ -4,10 +4,16 @@ import { useRouter } from 'vue-router'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '@/services/firebase'
 
+// Import PrimeVue components
+import Card from 'primevue/card'
+import InputText from 'primevue/inputtext'
+import Button from 'primevue/button'
+
 const router = useRouter()
 const email = ref('test@market-watch.com')
 const password = ref('test@market-watch.com')
 const errorMessage = ref<string | null>(null)
+const isLoading = ref(false)
 
 const handleLogin = async () => {
   errorMessage.value = null
@@ -27,20 +33,35 @@ const handleLogin = async () => {
 
 <template>
   <div class="login-view">
-    <form @submit.prevent="handleLogin" class="login-form">
-      <h2>Login</h2>
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" v-model="email" id="email" required />
-      </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" v-model="password" id="password" required />
-      </div>
-      <button type="submit">Log In</button>
-      <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-      <p class="info-text"></p>
-    </form>
+    <!-- Use the Card component for a clean layout -->
+    <Card class="login-card">
+      <template #title>
+        <h2>Login</h2>
+      </template>
+      <template #content>
+        <form @submit.prevent="handleLogin">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <!-- Use the InputText component -->
+            <InputText id="email" type="email" v-model="email" class="p-inputtext-lg" />
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <!-- Use the InputText component -->
+            <InputText id="password" type="password" v-model="password" class="p-inputtext-lg" />
+          </div>
+          <!-- Use the Button component, complete with loading spinner icon! -->
+          <Button
+            type="submit"
+            label="Log In"
+            :loading="isLoading"
+            class="p-button-lg p-button-success"
+            style="width: 100%"
+          />
+          <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+        </form>
+      </template>
+    </Card>
   </div>
 </template>
 
@@ -49,46 +70,32 @@ const handleLogin = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 50vh;
+  min-height: 80vh;
 }
-.login-form {
+.login-card {
   width: 100%;
-  max-width: 400px;
-  padding: 2rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  max-width: 450px;
 }
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 label {
   display: block;
   margin-bottom: 0.5rem;
+  font-weight: 600;
 }
-input {
+.p-inputtext-lg {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-button {
-  width: 100%;
-  padding: 0.75rem;
-  border: none;
-  background-color: #42b883;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
 }
 .error-message {
-  color: #d83a3a;
+  color: var(--p-red-500); /* Use PrimeVue theme colors */
   margin-top: 1rem;
+  text-align: center;
 }
 .info-text {
-  font-size: 0.8rem;
-  color: #666;
+  font-size: 0.9rem;
+  color: var(--p-text-color-secondary);
   text-align: center;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 </style>

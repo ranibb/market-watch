@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import { fetchMarketAssets, fetchAssetDetail } from '@/services/marketApi'
+import { fetchMarketAssets, fetchAssetDetail, fetchAssetChartData } from '@/services/marketApi'
+import { showErrorToast } from '@/services/toastService'
 
 // Define the TypeScript interfaces for our data structures
 export interface MarketAsset {
@@ -29,6 +30,7 @@ export interface MarketAssetDetail {
       usd: number
     }
   }
+  chartData?: { prices: [number, number][] }
 }
 
 // Define the shape of our store's state
@@ -36,7 +38,6 @@ interface MarketState {
   assets: MarketAsset[]
   detailsCache: Map<string, MarketAssetDetail> // Implement a caching mechanism directly within our Pinia store. The Map data structure in JavaScript is perfect for this, as it allows us to store data using a unique key (the asset id)
   isLoading: boolean
-  error: string | null
   searchQuery: string
 }
 
@@ -47,7 +48,6 @@ export const useMarketStore = defineStore('market', {
     assets: [],
     detailsCache: new Map(), // <-- Initialize the cache as a new Map
     isLoading: false,
-    error: null,
     searchQuery: '',
   }),
 
@@ -83,14 +83,13 @@ export const useMarketStore = defineStore('market', {
       if (this.assets.length > 0) return
 
       this.isLoading = true
-      this.error = null
       try {
         this.assets = await fetchMarketAssets()
       } catch (e: unknown) {
         if (e instanceof Error) {
-          this.error = e.message
+          showErrorToast(e.message)
         } else {
-          this.error = 'An unexpected error occurred'
+          showErrorToast('An unexpected error occurred')
         }
       } finally {
         this.isLoading = false
@@ -104,18 +103,26 @@ export const useMarketStore = defineStore('market', {
         return
       }
 
+      if (this.detailsCache.get(id)?.chartData) return // Only fetch if chart data is missing
+
       // 2. If not in the cache, fetch from the API.
       this.isLoading = true
-      this.error = null
       try {
-        const assetDetails = await fetchAssetDetail(id)
-        // 3. Add the fetched details to the cache, using the ID as the key.
-        this.detailsCache.set(id, assetDetails)
+        // Fetch details and chart data in parallel for performance
+        const [details, chart] = await Promise.all([
+          this.detailsCache.has(id)
+            ? Promise.resolve(this.detailsCache.get(id)!)
+            : fetchAssetDetail(id),
+          fetchAssetChartData(id),
+        ])
+
+        const fullDetails = { ...details, chartData: chart }
+        this.detailsCache.set(id, fullDetails)
       } catch (e: unknown) {
         if (e instanceof Error) {
-          this.error = e.message
+          showErrorToast(e.message)
         } else {
-          this.error = 'An unexpected error occurred'
+          showErrorToast('An unexpected error occurred')
         }
       } finally {
         this.isLoading = false
@@ -124,10 +131,6 @@ export const useMarketStore = defineStore('market', {
 
     setSearchQuery(query: string) {
       this.searchQuery = query
-    },
-
-    clearError() {
-      this.error = null
     },
   },
 })
