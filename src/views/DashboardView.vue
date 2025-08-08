@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMarketStore } from '@/stores/market'
 
@@ -9,13 +9,26 @@ import DataTable, {
   type DataTableRowSelectEvent,
 } from 'primevue/datatable'
 import Column from 'primevue/column'
+import InputText from 'primevue/inputtext'
 
 const marketStore = useMarketStore()
 const router = useRouter()
 
-// This computed property will calculate the 'first' record index from our store's state
-const firstRecordIndex = computed(() => {
-  return (marketStore.currentPage - 1) * marketStore.rowsPerPage
+// We use a local ref for the input, to control the debouncing
+const localSearchQuery = ref(marketStore.searchQuery)
+const debounceTimer = ref<number | null>(null)
+
+// WATCH the local input. When it changes, start a timer.
+watch(localSearchQuery, (newQuery) => {
+  // Clear the previous timer if it exists
+  if (debounceTimer.value) {
+    clearTimeout(debounceTimer.value)
+  }
+  // Set a new timer
+  debounceTimer.value = window.setTimeout(() => {
+    // When the timer fires, call the store's search action
+    marketStore.searchAssets(newQuery)
+  }, 500) // 500ms delay
 })
 
 // This function will be called by the DataTable whenever the page or rows-per-page changes
@@ -49,7 +62,7 @@ onMounted(() => {
       paginator
       :rows="marketStore.rowsPerPage"
       :totalRecords="marketStore.totalRecords"
-      :first="firstRecordIndex"
+      :first="(marketStore.currentPage - 1) * marketStore.rowsPerPage"
       :rowsPerPageOptions="[5, 10, 20]"
       @page="onPage"
       selectionMode="single"
@@ -62,7 +75,14 @@ onMounted(() => {
       <template #header>
         <div class="table-header">
           <h2>Market Dashboard</h2>
-          <!-- Search bar is removed for now -->
+          <span class="p-input-icon-left">
+            <i class="pi pi-search" />
+            <InputText
+              v-model="localSearchQuery"
+              placeholder="Search assets..."
+              class="p-inputtext-sm"
+            />
+          </span>
         </div>
       </template>
 

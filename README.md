@@ -4,37 +4,46 @@ A professional-grade, single-page application (SPA) built to showcase a robust a
 
 **Live Demo:** [https://stunning-moonbeam-f11193.netlify.app/](https://stunning-moonbeam-f11193.netlify.app/)
 
-![Derayah Market Watch Demo GIF](./.github/src/assets/app-demo.gif)
+![Derayah Market Watch Demo GIF](./.github/assets/app-demo.gif)
 
 ---
 
 ## 🏛️ Core Architectural Principles
 
-This project was architected around three core principles that are essential for long-term scalability and maintainability.
+This project was architected around four core principles that are essential for long-term scalability and maintainability.
 
 ### 1. Decoupling & Separation of Concerns
 
 The application maintains a strict separation between its layers:
 
-- **API Service Layer (`/services`):** All external API communication is handled here. The rest of the application is agnostic to the data source. **This layer has been enhanced to support server-side pagination.**
+- **API Service Layer (`/services`):** All external API communication is handled here. The rest of the application is agnostic to the data source. This layer has been enhanced to support server-side pagination and search.
 - **State Management Layer (`/stores`):** Pinia stores act as the single source of truth. They orchestrate business logic but delegate the "how" of data fetching to the service layer.
-- **UI Layer (`/views` & `/components`):** Vue components are primarily "dumb," responsible only for displaying state and emitting user events. The PrimeVue `<DataTable>` is configured in `lazy` mode to delegate all data operations to the store.
+- **UI Layer (`/views` & `/components`):** Vue components are primarily "dumb," responsible for displaying state and emitting user events. The PrimeVue `<DataTable>` is configured in `lazy` mode to delegate all data operations to the store.
 
 ### 2. Centralized & Scalable State Management
 
 Global state is managed exclusively by **Pinia**. This provides a predictable and debuggable state flow. Key patterns implemented include:
 
-- **Server-Side Pagination State:** The store now manages all state required for server-side pagination (`totalRecords`, `currentPage`, `rowsPerPage`), making the application capable of handling massive datasets with minimal initial load.
-- **Advanced Paginated Caching:** A multi-key cache (`Map`) stores previously fetched pages of data. The cache key considers both the page number and the items-per-page setting (e.g., `"2-10"`), ensuring data is only fetched once and served instantly on repeat visits. This provides a massive performance boost.
-- **Persistent UI State:** The store "remembers" the user's pagination state, so when they navigate away and back to the dashboard, they are returned to their exact previous position.
+- **Server-Side Operations State:** The store now manages the complete state for server-side operations, including pagination (`totalRecords`, `currentPage`) and search (`searchQuery`).
+- **Advanced Paginated Caching:** A multi-key cache (`Map`) stores previously fetched pages of data. The cache key is a composite of the search query, page number, and page size (e.g., `"bitcoin-1-10"`), ensuring data is only fetched once.
+- **Intelligent Cache Invalidation:** The cache is automatically cleared when a new search is performed, guaranteeing that users always see fresh, relevant results.
+- **Persistent UI State:** The store "remembers" the user's pagination state, returning them to their exact previous position when navigating back to the dashboard.
 
 ### 3. Automated Quality Gates
 
 Code quality is not optional; it's automated.
 
 - **Pre-commit Hooks:** Using **Husky** and **lint-staged**, the codebase is automatically linted and formatted before any commit can be made.
-- **Unit Testing:** The core business logic in the Pinia stores is rigorously unit-tested with **Vitest**, including mocking the API service to ensure reliability in isolation.
+- **Unit Testing:** The core business logic in the Pinia stores is rigorously unit-tested with **Vitest**, including mocking the API service.
 - **TypeScript Strict Mode:** The entire project runs in `strict` mode to enforce type safety and prevent common runtime errors.
+
+### 4. Resilient & User-Centric Error Handling
+
+The application is designed to handle failures gracefully.
+
+- **Specific Error Handling:** The application uses custom error types (`RateLimitError`) and intelligent `catch` blocks to distinguish between different API errors (e.g., rate limiting vs. generic failures) and browser-level CORS issues.
+- **Transactional State Updates:** For critical actions like pagination, the store implements a **state rollback** mechanism. If an API call fails, the application state is automatically reverted to its last valid state, preventing UI de-synchronization.
+- **User-Friendly Feedback:** All errors are presented to the user via a non-intrusive global Toast notification system, providing clear and actionable feedback.
 
 ---
 
@@ -46,15 +55,14 @@ Beyond the architecture, the application includes a rich set of professional-gra
 
 - **PrimeVue Component Library:** The entire UI is built with PrimeVue, providing a consistent, professional, and accessible design system.
 - **Dark/Light Mode:** A fully implemented, theme-aware dark mode that affects all components and global styles.
-- **Skeleton Loaders & Transitions:** Smooth page transitions and skeleton loaders create a fast, fluid, and modern perceived performance.
-- **Global Notifications:** A decoupled **Toast** notification system handles all user feedback (errors, successes) in a non-intrusive way.
-- **Confirmation Dialogs:** A promise-based confirmation service for sensitive actions like logging out.
+- **Debounced Input:** User input on the search bar is debounced to prevent excessive API calls and provide a smoother experience.
+- **Global Notifications:** A decoupled **Toast** notification system handles all user feedback.
 
 ### Functionality
 
 - **Full Authentication:** Complete user authentication and session management using **Firebase Authentication**.
-- **Protected Routes:** A robust navigation guard in `vue-router` protects authenticated routes from unauthorized access.
-- **Enterprise-Grade DataTable:** The main dashboard features a PrimeVue `<DataTable>` with **lazy-loaded, server-side pagination and sorting**. This ensures the application is highly performant, even with millions of potential records.
+- **Protected Routes:** A robust navigation guard in `vue-router` protects authenticated routes.
+- **Enterprise-Grade DataTable:** The main dashboard features a PrimeVue `<DataTable>` with **lazy-loaded, server-side pagination and debounced server-side search**. This ensures the application is highly performant, even with millions of potential records.
 - **Data Visualization:** The detail view includes a client-side chart using `Chart.js` to display historical price data, fetched on-demand.
 
 ---

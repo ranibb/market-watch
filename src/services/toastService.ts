@@ -17,6 +17,11 @@ export const showErrorToast = (message: string) => {
   toastService.add({ severity: 'error', summary: 'Error', detail: message, life: 3000 })
 }
 
+export const showWarnToast = (message: string) => {
+  if (!toastService) return
+  toastService.add({ severity: 'warn', summary: 'Warn', detail: message, life: undefined })
+}
+
 export const showSuccessToast = (message: string) => {
   if (!toastService) return
   toastService.add({ severity: 'success', summary: 'Success', detail: message, life: 3000 })
