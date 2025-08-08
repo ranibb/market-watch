@@ -4,7 +4,7 @@ A professional-grade, single-page application (SPA) built to showcase a robust a
 
 **Live Demo:** [https://stunning-moonbeam-f11193.netlify.app/](https://stunning-moonbeam-f11193.netlify.app/)
 
-![Derayah Market Watch Demo GIF](./.github/assets/app-demo.gif)
+![Derayah Market Watch Demo GIF](./.github/src/assets/app-demo.gif)
 
 ---
 
@@ -16,17 +16,17 @@ This project was architected around three core principles that are essential for
 
 The application maintains a strict separation between its layers:
 
-- **API Service Layer (`/services`):** All external API communication is handled here. The rest of the application is agnostic to the data source.
+- **API Service Layer (`/services`):** All external API communication is handled here. The rest of the application is agnostic to the data source. **This layer has been enhanced to support server-side pagination.**
 - **State Management Layer (`/stores`):** Pinia stores act as the single source of truth. They orchestrate business logic but delegate the "how" of data fetching to the service layer.
-- **UI Layer (`/views` & `/components`):** Vue components are primarily "dumb," responsible only for displaying state and emitting user events.
+- **UI Layer (`/views` & `/components`):** Vue components are primarily "dumb," responsible only for displaying state and emitting user events. The PrimeVue `<DataTable>` is configured in `lazy` mode to delegate all data operations to the store.
 
-### 2. Centralized State Management
+### 2. Centralized & Scalable State Management
 
 Global state is managed exclusively by **Pinia**. This provides a predictable and debuggable state flow. Key patterns implemented include:
 
-- **A `detailsCache`** to prevent redundant API calls for previously visited detail pages.
-- **Getters with arguments** (`getAssetById`) for efficient data selection.
-- **Modular stores** (`market.ts`, `auth.ts`) to keep concerns separated.
+- **Server-Side Pagination State:** The store now manages all state required for server-side pagination (`totalRecords`, `currentPage`, `rowsPerPage`), making the application capable of handling massive datasets with minimal initial load.
+- **Advanced Paginated Caching:** A multi-key cache (`Map`) stores previously fetched pages of data. The cache key considers both the page number and the items-per-page setting (e.g., `"2-10"`), ensuring data is only fetched once and served instantly on repeat visits. This provides a massive performance boost.
+- **Persistent UI State:** The store "remembers" the user's pagination state, so when they navigate away and back to the dashboard, they are returned to their exact previous position.
 
 ### 3. Automated Quality Gates
 
@@ -54,8 +54,8 @@ Beyond the architecture, the application includes a rich set of professional-gra
 
 - **Full Authentication:** Complete user authentication and session management using **Firebase Authentication**.
 - **Protected Routes:** A robust navigation guard in `vue-router` protects authenticated routes from unauthorized access.
-- **Enterprise-Grade Data Table:** The main dashboard features a PrimeVue `<DataTable>` with client-side search, sorting, and pagination.
-- **Data Visualization:** The detail view includes a client-side chart using `Chart.js` to display historical price data.
+- **Enterprise-Grade DataTable:** The main dashboard features a PrimeVue `<DataTable>` with **lazy-loaded, server-side pagination and sorting**. This ensures the application is highly performant, even with millions of potential records.
+- **Data Visualization:** The detail view includes a client-side chart using `Chart.js` to display historical price data, fetched on-demand.
 
 ---
 
@@ -81,8 +81,8 @@ Beyond the architecture, the application includes a rich set of professional-gra
     npm install
     ```
 4.  **Set up Firebase:**
-    - Create a `firebase.ts` file in `src/services/`.
-    - Add your Firebase project configuration to this file.
+    - Create a `.env.local` file in the project root.
+    - Add your Firebase project configuration variables to this file (see `.env.example`).
 5.  **Run the development server:**
     ```bash
     npm run dev

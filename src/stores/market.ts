@@ -1,5 +1,10 @@
 import { defineStore } from 'pinia'
-import { fetchMarketAssets, fetchAssetDetail, fetchAssetChartData } from '@/services/marketApi'
+import {
+  fetchMarketAssets,
+  fetchAssetDetail,
+  fetchAssetChartData,
+  fetchTotalAssetCount,
+} from '@/services/marketApi'
 import { showErrorToast } from '@/services/toastService'
 
 // Define the TypeScript interfaces for our data structures
@@ -35,41 +40,38 @@ export interface MarketAssetDetail {
 
 // Define the shape of our store's state
 interface MarketState {
-  assets: MarketAsset[]
-  detailsCache: Map<string, MarketAssetDetail> // Implement a caching mechanism directly within our Pinia store. The Map data structure in JavaScript is perfect for this, as it allows us to store data using a unique key (the asset id)
+  currentPageAssets: MarketAsset[]
+
+  // Implement a caching mechanism directly within our Pinia store. The Map data structure in JavaScript is perfect for this, as it allows us to store data using a unique key (the asset id)
+  detailsCache: Map<string, MarketAssetDetail>
+
+  // THE NEW CACHE! Key: page number, Value: array of assets
+  assetsCache: Map<string, MarketAsset[]>
+
   isLoading: boolean
-  searchQuery: string
+
+  // New properties for server-side pagination
+  totalRecords: number
+  rowsPerPage: number
+  currentPage: number
 }
 
 // Create the store
 export const useMarketStore = defineStore('market', {
   // 1. STATE: The core data of our store.
   state: (): MarketState => ({
-    assets: [],
+    currentPageAssets: [],
     detailsCache: new Map(), // <-- Initialize the cache as a new Map
+    assetsCache: new Map(),
     isLoading: false,
-    searchQuery: '',
+    // Initialize the new state properties
+    totalRecords: 0,
+    rowsPerPage: 5, // Default rows per page
+    currentPage: 1, // Page numbers are 1-based for our logic
   }),
 
   // 2. GETTERS: Computed properties for the store. Like computed() in a component.
   getters: {
-    filteredAssets: (state) => {
-      if (!state.searchQuery) {
-        return state.assets // If no search term, return the full list
-      }
-      const lowerCaseQuery = state.searchQuery.toLowerCase()
-      return state.assets.filter(
-        (asset) =>
-          asset.name.toLowerCase().includes(lowerCaseQuery) ||
-          asset.symbol.toLowerCase().includes(lowerCaseQuery),
-      )
-    },
-
-    // // The new advanced getter!
-    // getAssetById: (state) => {
-    //   return (id: string) => state.assets.find((asset) => asset.id === id)
-    // },
-
     // This getter will now check the CACHE for the detailed asset
     getAssetDetailsById: (state) => {
       return (id: string) => state.detailsCache.get(id)
@@ -78,19 +80,49 @@ export const useMarketStore = defineStore('market', {
 
   // 3. ACTIONS: Methods that can change the state. Where we put our business logic.
   actions: {
-    async fetchAssets() {
-      // We can add a check here to prevent re-fetching if assets already exist
-      if (this.assets.length > 0) return
-
+    // This is our new, powerful action for loading data for the DataTable
+    async loadAssets(event: { page: number; rows: number }) {
       this.isLoading = true
+
+      // The DataTable event provides a 0-based page index, our API needs a 1-based page number
+      const pageNumber = event.page + 1
+      const rows = event.rows
+
+      this.currentPage = pageNumber
+      this.rowsPerPage = event.rows
+
+      // ===================================================================
+      // THE UPGRADED CACHING LOGIC
+      // 1. Create a unique cache key for this specific page and size.
+      const cacheKey = `${pageNumber}-${rows}`
+
+      // 2. Check if this specific data is already in our cache.
+      if (this.assetsCache.has(cacheKey)) {
+        this.currentPageAssets = this.assetsCache.get(cacheKey)!
+        this.isLoading = false
+        console.log(`Serving ${cacheKey} from cache.`)
+        return
+      }
+      // ===================================================================
+
+      // 3. If not in the cache, proceed to fetch from the API.
+      console.log(`Fetching ${cacheKey} from API.`) // For debugging
+
       try {
-        this.assets = await fetchMarketAssets()
-      } catch (e: unknown) {
-        if (e instanceof Error) {
-          showErrorToast(e.message)
-        } else {
-          showErrorToast('An unexpected error occurred')
+        // Fetch the total count ONLY if we don't have it yet.
+        if (this.totalRecords === 0) {
+          const total = await fetchTotalAssetCount()
+          this.totalRecords = total
         }
+
+        // Fetch just the data for the current page
+        const pageData = await fetchMarketAssets(this.currentPage, this.rowsPerPage)
+        // 4. Update the current view's data
+        this.currentPageAssets = pageData
+        // 5. IMPORTANT: Store the newly fetched data in the cache for next time.
+        this.assetsCache.set(cacheKey, pageData)
+      } catch (e: unknown) {
+        if (e instanceof Error) showErrorToast(e.message)
       } finally {
         this.isLoading = false
       }
@@ -127,10 +159,6 @@ export const useMarketStore = defineStore('market', {
       } finally {
         this.isLoading = false
       }
-    },
-
-    setSearchQuery(query: string) {
-      this.searchQuery = query
     },
   },
 })

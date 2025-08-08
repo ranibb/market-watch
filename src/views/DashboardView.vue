@@ -1,20 +1,28 @@
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMarketStore } from '@/stores/market'
 
 // Import PrimeVue components
-import DataTable, { type DataTableRowSelectEvent } from 'primevue/datatable'
+import DataTable, {
+  type DataTablePageEvent,
+  type DataTableRowSelectEvent,
+} from 'primevue/datatable'
 import Column from 'primevue/column'
-import InputText from 'primevue/inputtext'
 
 const marketStore = useMarketStore()
 const router = useRouter()
 
-const searchQuery = computed({
-  get: () => marketStore.searchQuery,
-  set: (value) => marketStore.setSearchQuery(value),
+// This computed property will calculate the 'first' record index from our store's state
+const firstRecordIndex = computed(() => {
+  return (marketStore.currentPage - 1) * marketStore.rowsPerPage
 })
+
+// This function will be called by the DataTable whenever the page or rows-per-page changes
+const onPage = (event: DataTablePageEvent) => {
+  // Trigger the store action with the event from the DataTable
+  marketStore.loadAssets({ page: event.page, rows: event.rows })
+}
 
 const onRowSelect = (event: DataTableRowSelectEvent) => {
   // Navigate to detail page when a row is clicked
@@ -22,21 +30,28 @@ const onRowSelect = (event: DataTableRowSelectEvent) => {
 }
 
 onMounted(() => {
-  if (marketStore.assets.length === 0) {
-    marketStore.fetchAssets()
-  }
+  // The store already remembers the currentPage and rowsPerPage.
+  // We just need to trigger the load action with the state it already holds.
+  // The DataTable's page index is 0-based, so we subtract 1.
+  marketStore.loadAssets({
+    page: marketStore.currentPage - 1,
+    rows: marketStore.rowsPerPage,
+  })
 })
 </script>
 
 <template>
   <div class="dashboard-view">
     <DataTable
-      :value="marketStore.filteredAssets"
-      :loading="marketStore.isLoading && marketStore.assets.length === 0"
+      :value="marketStore.currentPageAssets"
+      :loading="marketStore.isLoading"
+      lazy
       paginator
-      :rows="5"
+      :rows="marketStore.rowsPerPage"
+      :totalRecords="marketStore.totalRecords"
+      :first="firstRecordIndex"
       :rowsPerPageOptions="[5, 10, 20]"
-      sortMode="multiple"
+      @page="onPage"
       selectionMode="single"
       @rowSelect="onRowSelect"
       dataKey="id"
@@ -47,16 +62,7 @@ onMounted(() => {
       <template #header>
         <div class="table-header">
           <h2>Market Dashboard</h2>
-          <div class="search-bar-container">
-            <span class="p-input-icon-left">
-              <i class="pi pi-search" />
-              <InputText
-                v-model="searchQuery"
-                placeholder="Search assets..."
-                class="p-inputtext-sm"
-              />
-            </span>
-          </div>
+          <!-- Search bar is removed for now -->
         </div>
       </template>
 
@@ -66,9 +72,9 @@ onMounted(() => {
       </template>
 
       <!-- Define the columns -->
-      <Column field="market_cap_rank" header="Rank" :sortable="true"></Column>
+      <Column field="market_cap_rank" header="Rank"></Column>
 
-      <Column field="name" header="Name" :sortable="true">
+      <Column field="name" header="Name">
         <template #body="slotProps">
           <div class="name-cell">
             <img :src="slotProps.data.image" :alt="slotProps.data.name" class="asset-logo" />
@@ -77,7 +83,7 @@ onMounted(() => {
         </template>
       </Column>
 
-      <Column field="current_price" header="Price" :sortable="true">
+      <Column field="current_price" header="Price">
         <template #body="slotProps">
           {{
             new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
