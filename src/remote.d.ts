@@ -1,0 +1,6 @@
+declare module 'portfolio_app/PortfolioSummary' {
+  import { DefineComponent } from 'vue'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const component: DefineComponent<object, object, any>
+  export default component
+}

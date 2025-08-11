@@ -40,6 +40,10 @@ const handleLogout = async () => {
       <div class="logo-area">
         <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="40" height="40" />
         <h1>Derayah Market Watch</h1>
+        <!-- Add a link to the home dashboard -->
+        <RouterLink to="/" class="nav-link">Dashboard</RouterLink>
+        <!-- Add a link to the new portfolio page -->
+        <RouterLink to="/portfolio" class="nav-link">Portfolio</RouterLink>
       </div>
     </template>
 
@@ -108,6 +112,13 @@ const handleLogout = async () => {
 
 .main-content {
   padding: 0 1rem;
+}
+
+.nav-link {
+  margin-left: 1.5rem;
+  text-decoration: none;
+  color: var(--p-text-color);
+  font-weight: 600;
 }
 
 /* Global styles for transitions should be in main.css */

@@ -1,6 +1,6 @@
 # Derayah Market Watch: A Blueprint for Modern Front-End Architecture
 
-A professional-grade, single-page application (SPA) built to showcase a robust and scalable front-end architecture using Vue 3, Pinia, TypeScript, and the PrimeVue component library. This project serves as a comprehensive blueprint for building modern, feature-rich, and maintainable web applications.
+A professional-grade, **micro-frontend shell application** built to showcase a robust and scalable architecture using Vue 3, Pinia, TypeScript, and PrimeVue. This project serves as a comprehensive blueprint for building modern, feature-rich, and maintainable web applications using an enterprise-grade, multi-repository setup.
 
 **Live Demo:** [https://stunning-moonbeam-f11193.netlify.app/](https://stunning-moonbeam-f11193.netlify.app/)
 
@@ -10,98 +10,89 @@ A professional-grade, single-page application (SPA) built to showcase a robust a
 
 ## 🏛️ Core Architectural Principles
 
-This project was architected around four core principles that are essential for long-term scalability and maintainability.
+This project was architected around a **Micro-Frontend** model, demonstrating how to build a complex application by composing independently developed and deployed features.
 
-### 1. Decoupling & Separation of Concerns
+### 1. The Micro-Frontend Shell
 
-The application maintains a strict separation between its layers:
+This application acts as the **Host** or **Shell**. It is responsible for:
 
-- **API Service Layer (`/services`):** All external API communication is handled here. The rest of the application is agnostic to the data source. This layer has been enhanced to support server-side pagination and search.
-- **State Management Layer (`/stores`):** Pinia stores act as the single source of truth. They orchestrate business logic but delegate the "how" of data fetching to the service layer.
-- **UI Layer (`/views` & `/components`):** Vue components are primarily "dumb," responsible for displaying state and emitting user events. The PrimeVue `<DataTable>` is configured in `lazy` mode to delegate all data operations to the store.
+- **Rendering the main application layout**, including the primary navigation and toolbar.
+- **Providing core, cross-cutting services** like authentication, session management, and global UI state (loading, notifications).
+- **Orchestrating the routing** between its own pages and the dynamically loaded remote micro-frontends.
 
-### 2. Centralized & Scalable State Management
+### 2. The Remote Micro-Frontend
 
-Global state is managed exclusively by **Pinia**. This provides a predictable and debuggable state flow. Key patterns implemented include:
+A separate, independently deployed application, the [Remote Portfolio](https://github.com/ranibb/remote-portfolio), provides the "Portfolio" feature.
 
-- **Server-Side Operations State:** The store now manages the complete state for server-side operations, including pagination (`totalRecords`, `currentPage`) and search (`searchQuery`).
-- **Advanced Paginated Caching:** A multi-key cache (`Map`) stores previously fetched pages of data. The cache key is a composite of the search query, page number, and page size (e.g., `"bitcoin-1-10"`), ensuring data is only fetched once.
-- **Intelligent Cache Invalidation:** The cache is automatically cleared when a new search is performed, guaranteeing that users always see fresh, relevant results.
-- **Persistent UI State:** The store "remembers" the user's pagination state, returning them to their exact previous position when navigating back to the dashboard.
+- This remote app is **dynamically loaded** into the Shell at runtime using **Module Federation**.
+- This pattern simulates a multi-team environment where different teams can own, develop, and deploy their features autonomously.
 
-### 3. Automated Quality Gates
+### 3. Centralized & Scalable State Management
 
-Code quality is not optional; it's automated.
+Global state is managed exclusively by **Pinia**. This provides a predictable and debuggable state flow. Key patterns include:
+
+- **Server-Side Operations State:** The store manages the complete state for server-side pagination and search.
+- **Advanced Paginated Caching:** A multi-key cache (`Map`) stores previously fetched pages, keyed by a composite of the search query, page number, and page size, to eliminate redundant API calls.
+- **Persistent UI State:** The store "remembers" the user's pagination state, returning them to their exact previous position when navigating.
+
+### 4. Automated Quality Gates & Resilience
+
+Code quality and application resilience are built-in and automated.
 
 - **Pre-commit Hooks:** Using **Husky** and **lint-staged**, the codebase is automatically linted and formatted before any commit can be made.
-- **Unit Testing:** The core business logic in the Pinia stores is rigorously unit-tested with **Vitest**, including mocking the API service.
-- **TypeScript Strict Mode:** The entire project runs in `strict` mode to enforce type safety and prevent common runtime errors.
-
-### 4. Resilient & User-Centric Error Handling
-
-The application is designed to handle failures gracefully.
-
-- **Specific Error Handling:** The application uses custom error types (`RateLimitError`) and intelligent `catch` blocks to distinguish between different API errors (e.g., rate limiting vs. generic failures) and browser-level CORS issues.
-- **Transactional State Updates:** For critical actions like pagination, the store implements a **state rollback** mechanism. If an API call fails, the application state is automatically reverted to its last valid state, preventing UI de-synchronization.
-- **User-Friendly Feedback:** All errors are presented to the user via a non-intrusive global Toast notification system, providing clear and actionable feedback.
+- **Unit Testing:** The core business logic in the Pinia stores is rigorously unit-tested with **Vitest**.
+- **Resilient State Management:** The store uses a **transactional state rollback** mechanism. If an API call fails, the UI state is automatically reverted to its last valid state, preventing de-synchronization.
+- **Specific Error Handling:** The application uses custom error types and intelligent `catch` blocks to provide clear, user-friendly feedback for different failure scenarios (e.g., rate limiting).
 
 ---
 
 ## ✨ Key Features & Implementations
 
-Beyond the architecture, the application includes a rich set of professional-grade features.
-
-### User Experience
-
-- **PrimeVue Component Library:** The entire UI is built with PrimeVue, providing a consistent, professional, and accessible design system.
-- **Dark/Light Mode:** A fully implemented, theme-aware dark mode that affects all components and global styles.
-- **Debounced Input:** User input on the search bar is debounced to prevent excessive API calls and provide a smoother experience.
-- **Global Notifications:** A decoupled **Toast** notification system handles all user feedback.
-
 ### Functionality
 
 - **Full Authentication:** Complete user authentication and session management using **Firebase Authentication**.
 - **Protected Routes:** A robust navigation guard in `vue-router` protects authenticated routes.
-- **Enterprise-Grade DataTable:** The main dashboard features a PrimeVue `<DataTable>` with **lazy-loaded, server-side pagination and debounced server-side search**. This ensures the application is highly performant, even with millions of potential records.
-- **Data Visualization:** The detail view includes a client-side chart using `Chart.js` to display historical price data, fetched on-demand.
+- **Enterprise-Grade DataTable:** A PrimeVue `<DataTable>` with lazy-loaded, server-side pagination and debounced server-side search.
+- **Data Visualization:** Client-side charting with `Chart.js` to display historical price data.
+- **Dynamic Micro-Frontend Loading:** The Portfolio page demonstrates dynamically loading and rendering a component from a separate, live-deployed application.
+
+### User Experience
+
+- **PrimeVue Component Library:** The entire UI is built with a consistent, professional, and accessible design system.
+- **Dark/Light Mode:** A fully implemented, theme-aware dark mode that affects all components and global styles.
+- **Global UI State Components:** Centralized, non-intrusive components for `Toast` notifications, `Confirmation Dialogs`, and `Loading Indicators`.
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Local Development (Micro-Frontend Workflow)
 
-### Prerequisites
+This project is designed to be run in parallel with its remote dependencies.
 
-- Node.js (v22.x or later)
-- npm
+### 1. Run the Remote App (`remote-portfolio`)
 
-### Installation & Setup
+In a separate terminal, the remote must be **built** and then **served** on port 5001.
 
-1.  **Clone the repository:**
-    ```bash
-    git clone [Your GitHub Repo URL]
-    ```
-2.  **Navigate to the project directory:**
-    ```bash
-    cd derayah-market-watch
-    ```
-3.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-4.  **Set up Firebase:**
-    - Create a `.env.local` file in the project root.
-    - Add your Firebase project configuration variables to this file (see `.env.example`).
-5.  **Run the development server:**
-    ```bash
-    npm run dev
-    ```
+```bash
+# In the remote-portfolio directory
+npm run build
+npm run preview -- --port 5001
+```
 
-### Available Scripts
+### 2. Run the Shell App (This Project)
 
-- `npm run dev`: Starts the development server.
-- `npm run build`: Compiles and minifies the application for production.
-- `npm run lint`: Lints and fixes files.
-- `npm run test:unit`: Runs the unit tests with Vitest.
+In another terminal, run the Shell in development mode. It is configured to consume the remote running on port 5001.
+
+```bash
+npm run dev
+```
+
+## 📦 Deployment
+
+This application is deployed using a **multi-repository, separate deployment** strategy on Netlify, which is a professional, production-grade pattern.
+
+- The **Shell** is deployed to its primary URL.
+- The **Remote** is deployed to a separate, independent URL.
+- The Remote's Netlify site is configured with a `_headers` file to set the correct `Access-Control-Allow-Origin` (CORS) header, allowing the Shell to securely fetch its assets.
 
 ---
 
