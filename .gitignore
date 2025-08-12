@@ -29,4 +29,8 @@ coverage
 
 *.tsbuildinfo
 
+# Environment variables
 .env.local
+
+# Local Netlify folder
+.netlify

@@ -1,0 +1,6 @@
+# _redirects file for the SHELL app
+
+# This is the "catch-all" rule for the Single-Page Application.
+# It ensures that direct navigation to any sub-path (like /portfolio)
+# will serve the main index.html file, allowing the Vue Router to handle it.
+/*    /index.html    200
